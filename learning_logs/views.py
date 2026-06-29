@@ -5,6 +5,10 @@ from django.http import Http404
 from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
+def check_topic_owner(topic, request):
+    if topic.owner != request.user:
+        raise Http404
+
 def index(request):
     """Learning Log app homepage"""
     return render(request, 'learning_logs/index.html')
@@ -20,8 +24,7 @@ def topics(request):
 def topic(request, topic_id):
     """"""
     topic = Topic.objects.get(id=topic_id)
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(topic, request)
 
     entries = topic.entry_set.order_by('-date_added')
     context = {'topic': topic, 'entries': entries}
@@ -50,8 +53,7 @@ def new_topic(request):
 def new_entry(request, topic_id):
     """Adds a new post on a specific topic"""
     topic = Topic.objects.get(id=topic_id)
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(topic, request)
     
     if request.method != 'POST':
         # No data was submitted; an empty form is being created.
@@ -74,8 +76,7 @@ def edit_entry(request, entry_id):
     """Edits an existing entry"""
     entry = Entry.objects.get(id=entry_id)
     topic = entry.topic
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(topic, request)
 
     if request.method != 'POST':
         # Initial request; the form is populated with the current record's data.
